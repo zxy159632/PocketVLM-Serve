@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Phone LLM Demo</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 860px;
+      margin: 24px auto;
+      padding: 0 16px 40px;
+      color: #222;
+      line-height: 1.6;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .desc {
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      background: #fafafa;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+
+    textarea, input, button, select {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    textarea {
+      min-height: 110px;
+      padding: 12px;
+      border: 1px solid #d9d9d9;
+      border-radius: 10px;
+      resize: vertical;
+    }
+
+    input[type="file"] {
+      padding: 8px 0;
+    }
+
+    button {
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #111827;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .output {
+      margin-top: 12px;
+      min-height: 100px;
+      border: 1px solid #d9d9d9;
+      border-radius: 10px;
+      padding: 12px;
+      background: white;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .meta {
+      margin-top: 10px;
+      color: #666;
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+
+    img.preview {
+      margin-top: 12px;
+      max-width: 100%;
+      max-height: 280px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .topbar label {
+      font-size: 14px;
+      color: #444;
+    }
+
+    .topbar select {
+      width: auto;
+      min-width: 160px;
+      margin-top: 0;
+      padding: 8px 10px;
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      background: white;
+    }
+
+    .quick-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .quick-btns button {
+      margin-top: 0;
+    }
+
+    .hint {
+      color: #888;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 640px) {
+      .quick-btns {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Phone LLM Demo</h1>
+  <div class="desc">
+    这是一个基于 llama.cpp + GGUF + Termux 的手机本地多模态推理演示页面。
+  </div>
+
+  <div class="topbar">
+    <label for="streamMode">输出模式：</label>
+    <select id="streamMode">
+      <option value="false" selected>非流式输出</option>
+      <option value="true">流式打字机输出</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>1. 文本输入</h2>
+
+    <textarea id="textPrompt" placeholder="请输入你的问题"></textarea>
+    <button id="textBtn" onclick="handleSendText()">发送文本请求</button>
+    <div id="textOutput" class="output">等待输入...</div>
+  </div>
+
+  <div class="card">
+    <h2>2. 文件输入</h2>
+    <input type="file" id="fileInput" accept=".txt,.md,.json,.csv">
+    <textarea id="fileQuestion" placeholder="请输入你想对文件提的问题">请总结这份文件的内容</textarea>
+    <div id="fileMeta" class="meta">当前未选择文件。</div>
+    <div class="hint">说明：文件区会先在前端读取文本，再把“文件名 + 文件内容 + 问题”拼成 prompt 发送给本地 llama-server。</div>
+    <button id="fileBtn" onclick="handleSendFile()">发送文件请求</button>
+    <div id="fileOutput" class="output">等待输入...</div>
+  </div>
+
+  <div class="card">
+    <h2>3. 图片输入</h2>
+    <textarea id="imagePrompt" placeholder="请输入图片分析要求">请描述这张图片的主要内容，并尽量简洁。</textarea>
+    <input type="file" id="imageInput" accept="image/*" capture="environment">
+    <img id="imagePreview" class="preview" />
+    <div id="imageMeta" class="meta">当前未选择图片。</div>
+    <div class="hint">说明：图片会先在浏览器端压缩，再以 base64 data URL 发送到本地 llama-server。</div>
+    <button id="imageBtn" onclick="handleSendImage()">发送图片请求</button>
+    <div id="imageOutput" class="output">等待输入...</div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.protocol + "//" + window.location.hostname + ":8081/v1";
+    const MODEL_NAME = "qwen35-vlm";
+
+    let selectedTextFile = null;
+    let selectedTextFileContent = "";
+    let selectedImageBase64 = "";
+
+    function fillPrompt(text) {
+      document.getElementById("textPrompt").value = text;
+    }
+
+    async function readTextFile(file) {
+      return await file.text();
+    }
+
+    async function compressImage(file, maxSide = 768, quality = 0.75) {
+      const img = document.createElement("img");
+      const reader = new FileReader();
+
+      const dataUrl = await new Promise((resolve, reject) => {
+        reader.onload = e => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      img.src = dataUrl;
+
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      let { width, height } = img;
+      const scale = Math.min(maxSide / Math.max(width, height), 1);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      return canvas.toDataURL("image/jpeg", quality);
+    }
+
+    function renderMarkdown(outputElement, text) {
+      outputElement.innerHTML = marked.parse(text || "");
+      if (window.MathJax) {
+        MathJax.typesetPromise([outputElement]).catch(() => {});
+      }
+    }
+
+    async function sendChatCompletions(messages, stream = false, maxTokens = 256, temperature = 0.7) {
+      const resp = await fetch(`${API_BASE}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: MODEL_NAME,
+          messages,
+          max_tokens: maxTokens,
+          temperature,
+          stream
+        })
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(`请求报错，状态码: ${resp.status}\n${errText}`);
+      }
+
+      return resp;
+    }
+
+    async function readNonStreamResponse(resp) {
+      const data = await resp.json();
+      return data?.choices?.[0]?.message?.content || JSON.stringify(data, null, 2);
+    }
+
+    async function readStreamResponse(resp, outputElement) {
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+      let fullText = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+
+          const dataStr = trimmed.slice(5).trim();
+          if (dataStr === "[DONE]") {
+            renderMarkdown(outputElement, fullText);
+            return fullText;
+          }
+
+          try {
+            const data = JSON.parse(dataStr);
+            const delta = data?.choices?.[0]?.delta?.content || "";
+            if (delta) {
+              fullText += delta;
+              renderMarkdown(outputElement, fullText);
+            }
+          } catch (e) {
+            // 忽略无法解析的流式片段
+          }
+        }
+      }
+
+      renderMarkdown(outputElement, fullText);
+      return fullText;
+    }
+
+    async function fetchAndRender(messages, btn, outputElement, maxTokens = 256, temperature = 0.7) {
+      btn.disabled = true;
+      outputElement.textContent = "请求中...";
+
+      const isStream = document.getElementById("streamMode").value === "true";
+
+      try {
+        const resp = await sendChatCompletions(messages, isStream, maxTokens, temperature);
+
+        if (isStream) {
+          await readStreamResponse(resp, outputElement);
+        } else {
+          const text = await readNonStreamResponse(resp);
+          renderMarkdown(outputElement, text);
+        }
+      } catch (err) {
+        outputElement.textContent = "请求失败：\n" + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function handleSendText() {
+      const btn = document.getElementById("textBtn");
+      const output = document.getElementById("textOutput");
+      const prompt = document.getElementById("textPrompt").value.trim();
+
+      if (!prompt) {
+        output.textContent = "请输入问题。";
+        return;
+      }
+
+      await fetchAndRender(
+        [
+          { role: "user", content: prompt }
+        ],
+        btn,
+        output,
+        8192,
+        0.7
+      );
+    }
+
+    async function handleSendFile() {
+      const btn = document.getElementById("fileBtn");
+      const output = document.getElementById("fileOutput");
+      const question = document.getElementById("fileQuestion").value.trim();
+
+      if (!selectedTextFile) {
+        output.textContent = "请先选择 txt / md / json / csv 文件。";
+        return;
+      }
+
+      const prompt = `下面是文件内容，请先理解文件，再回答问题。
+
+文件名：${selectedTextFile.name}
+
+文件内容：
+${selectedTextFileContent.slice(0, 6000)}
+
+问题：
+${question || "请总结这份文件的内容"}`;
+
+      await fetchAndRender(
+        [
+          { role: "user", content: prompt }
+        ],
+        btn,
+        output,
+        8192,
+        0.7
+      );
+    }
+
+    async function handleSendImage() {
+      const btn = document.getElementById("imageBtn");
+      const output = document.getElementById("imageOutput");
+      const prompt = document.getElementById("imagePrompt").value.trim();
+
+      if (!selectedImageBase64) {
+        output.textContent = "请先选择或拍摄一张图片。";
+        return;
+      }
+
+      await fetchAndRender(
+        [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: prompt || "请描述这张图片的主要内容，并尽量简洁清楚。"
+              },
+              {
+                type: "image_url",
+                image_url: { url: selectedImageBase64 }
+              }
+            ]
+          }
+        ],
+        btn,
+        output,
+        8192,
+        0.2
+      );
+    }
+
+    document.getElementById("fileInput").addEventListener("change", async function () {
+      const file = this.files[0];
+      const meta = document.getElementById("fileMeta");
+      selectedTextFile = null;
+      selectedTextFileContent = "";
+
+      if (!file) {
+        meta.textContent = "当前未选择文件。";
+        return;
+      }
+
+      try {
+        const content = await readTextFile(file);
+        selectedTextFile = file;
+        selectedTextFileContent = content;
+
+        const preview = content.length > 300
+          ? content.slice(0, 300) + "\n...(已截断)"
+          : content;
+
+        meta.textContent =
+          "已选择文件：" + file.name + "\n" +
+          "文件大小：" + (file.size / 1024).toFixed(1) + " KB\n" +
+          "文本长度：" + content.length + " 字符\n\n" +
+          "内容预览：\n" + preview;
+      } catch (err) {
+        meta.textContent = "文件读取失败：\n" + err;
+      }
+    });
+
+    document.getElementById("imageInput").addEventListener("change", async function () {
+      const file = this.files[0];
+      const meta = document.getElementById("imageMeta");
+      const preview = document.getElementById("imagePreview");
+      selectedImageBase64 = "";
+
+      if (!file) {
+        meta.textContent = "当前未选择图片。";
+        preview.style.display = "none";
+        return;
+      }
+
+      try {
+        const compressed = await compressImage(file, 768, 0.75);
+        selectedImageBase64 = compressed;
+
+        preview.src = compressed;
+        preview.style.display = "block";
+
+        meta.textContent =
+          "已选择图片：" + file.name + "\n" +
+          "原始大小：" + (file.size / 1024).toFixed(1) + " KB\n" +
+          "已完成浏览器端压缩，将发送到本地 llama-server。";
+      } catch (err) {
+        meta.textContent = "图片处理失败：\n" + err;
+        preview.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>

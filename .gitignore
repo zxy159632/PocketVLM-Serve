@@ -1,0 +1,23 @@
+# ========================================
+# 移动端大模型项目忽略清单
+# ========================================
+
+# 1. 忽略目标文件夹下的所有内容
+/llama.cpp/*
+/logs/*
+/models/*
+/pids/*
+/venvs/*
+
+# 2. 豁免 .gitkeep 文件，强制 Git 追踪这些空目录结构
+!/llama.cpp/.gitkeep
+!/logs/.gitkeep
+!/models/.gitkeep
+!/pids/.gitkeep
+!/venvs/.gitkeep
+
+# 3. 其他常规的 Python/Web 开发忽略项 (建议添加)
+__pycache__/
+*.pyc
+.env
+.DS_Store
