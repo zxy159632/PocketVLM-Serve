@@ -1,0 +1,15 @@
+THREADS=4
+THREADS_BATCH=4
+UBATCH=512
+PARALLEL=2
+CTX_SIZE=8192
+BATCH_SIZE=512
+URL=http://127.0.0.1:8081/v1/chat/completions
+METRICS_URL=http://127.0.0.1:8081/metrics
+MODEL=qwen35-vlm
+IMAGE_FILE=/data/data/com.termux/files/home/storage/dcim/Camera/test.jpg
+CASES=text_short_64 text_medium_128 image_short_64
+TEXT_REQUESTS=10
+IMAGE_REQUESTS=5
+CONCURRENCY_TEXT=1
+CONCURRENCY_IMAGE=1

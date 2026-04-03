@@ -1,0 +1,223 @@
+{
+  "started_at": 1775058531.7924976,
+  "started_at_iso": "2026-04-01T23:48:51.792501+08:00",
+  "mode": "multimodal",
+  "api_url": "http://127.0.0.1:8081/v1/chat/completions",
+  "metrics_url": "http://127.0.0.1:8081/metrics",
+  "metrics_available": true,
+  "model": "qwen35-vlm",
+  "case": "image_short_64",
+  "requests": 5,
+  "concurrency": 1,
+  "max_tokens": 64,
+  "temperature": 0.2,
+  "stream": true,
+  "prompt": "请用一句话简洁描述图片内容。",
+  "image_path": "/data/data/com.termux/files/home/storage/dcim/Camera/test.jpg",
+  "pid": 28865,
+  "summary": {
+    "requests_total": 5,
+    "requests_ok": 5,
+    "success_rate": 1.0,
+    "ttft_ms": {
+      "mean": 29687.83977019787,
+      "p50": 253.47046902775764,
+      "p95": 117978.38355982897,
+      "min": 240.907968968153,
+      "max": 147399.27468404174
+    },
+    "e2e_latency_ms": {
+      "mean": 30773.360728412867,
+      "p50": 1255.5957809984684,
+      "p95": 119557.44376744029,
+      "min": 844.4865630269051,
+      "max": 149039.0639540553
+    },
+    "prefill_tps": {
+      "mean": 10841.405086858776,
+      "p50": 13812.25991899121,
+      "p95": 14418.699018114348,
+      "min": 23.751812941444804,
+      "max": 14532.520509783622
+    },
+    "decode_tps": {
+      "mean": 41.47012857886446,
+      "p50": 41.911651558658164,
+      "p95": 44.7062824017769,
+      "min": 37.22402862354495,
+      "max": 44.78195152697989
+    },
+    "e2e_tps": {
+      "mean": 26.261086821324632,
+      "p50": 34.335542424707384,
+      "p95": 35.601564213487265,
+      "min": 0.4294176191265497,
+      "max": 35.83955973809926
+    },
+    "prompt_tokens": {
+      "mean": 3501.0,
+      "p50": 3501.0,
+      "p95": 3501.0,
+      "min": 3501.0,
+      "max": 3501.0
+    },
+    "completion_tokens": {
+      "mean": 45.0,
+      "p50": 45.0,
+      "p95": 62.4,
+      "min": 22.0,
+      "max": 64.0
+    }
+  },
+  "aggregate": {
+    "wall_time_ms": 153866.80364206433
+  },
+  "process_memory": {
+    "rss_kb_min": 883420,
+    "rss_kb_max": 1876316,
+    "pss_kb_min": 879262,
+    "pss_kb_max": 1872731
+  },
+  "raw_results": [
+    {
+      "ok": true,
+      "ttft_ms": 147399.27468404174,
+      "ttft_any_ms": 147399.27270400524,
+      "ttft_answer_ms": 147399.27468404174,
+      "e2e_latency_ms": 149039.0639540553,
+      "prompt_tokens": 3501,
+      "completion_tokens": 64,
+      "raw_text_preview": "<think>\n\n</think>\n\n这是一张“Qwen 图文问答 Demo”的界面截图，显示用户正在等待上传图片或文字。顶部显示时间为15:08，电池电量为32%。页面分为两个部分：第一部分要求用户描述图片，第二部分允许用户上传照片或文字。当前状态为“未选择文件",
+      "visible_text_preview": "这是一张“Qwen 图文问答 Demo”的界面截图，显示用户正在等待上传图片或文字。顶部显示时间为15:08，电池电量为32%。页面分为两个部分：第一部分要求用户描述图片，第二部分允许用户上传照片或文字。当前状态为“未选择文件",
+      "raw_text": "<think>\n\n</think>\n\n这是一张“Qwen 图文问答 Demo”的界面截图，显示用户正在等待上传图片或文字。顶部显示时间为15:08，电池电量为32%。页面分为两个部分：第一部分要求用户描述图片，第二部分允许用户上传照片或文字。当前状态为“未选择文件",
+      "visible_text": "这是一张“Qwen 图文问答 Demo”的界面截图，显示用户正在等待上传图片或文字。顶部显示时间为15:08，电池电量为32%。页面分为两个部分：第一部分要求用户描述图片，第二部分允许用户上传照片或文字。当前状态为“未选择文件",
+      "reasoning_text": "",
+      "answer_text": "<think>\n\n</think>\n\n这是一张“Qwen 图文问答 Demo”的界面截图，显示用户正在等待上传图片或文字。顶部显示时间为15:08，电池电量为32%。页面分为两个部分：第一部分要求用户描述图片，第二部分允许用户上传照片或文字。当前状态为“未选择文件",
+      "error": null,
+      "prefill_tps": 23.751812941444804,
+      "decode_tps": 39.02940528417432,
+      "e2e_tps": 0.4294176191265497,
+      "server_metrics_after": {
+        "prompt_tokens_seconds": 23.8067,
+        "predicted_tokens_seconds": 52.4032,
+        "kv_cache_usage_ratio": null,
+        "kv_cache_tokens": null,
+        "requests_processing": 0.0
+      },
+      "prompt_tokens_note": "For multimodal hot-path requests, prompt_tokens may reflect processed/new tokens after cache reuse, not necessarily the full logical input length.",
+      "request_index": 1
+    },
+    {
+      "ok": true,
+      "ttft_ms": 294.81906297802925,
+      "ttft_any_ms": 294.81770899891853,
+      "ttft_answer_ms": 294.81906297802925,
+      "e2e_latency_ms": 1630.9630209803581,
+      "prompt_tokens": 3501,
+      "completion_tokens": 56,
+      "raw_text_preview": "<think>\n\n</think>\n\n图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个部分：第一部分是用户未选择图片的表单，第二部分是用户可以选择拍照或从相册选择图片的表单，当前状态为“未选择图片”，提示用户可只发送文字。",
+      "visible_text_preview": "图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个部分：第一部分是用户未选择图片的表单，第二部分是用户可以选择拍照或从相册选择图片的表单，当前状态为“未选择图片”，提示用户可只发送文字。",
+      "raw_text": "<think>\n\n</think>\n\n图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个部分：第一部分是用户未选择图片的表单，第二部分是用户可以选择拍照或从相册选择图片的表单，当前状态为“未选择图片”，提示用户可只发送文字。",
+      "visible_text": "图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个部分：第一部分是用户未选择图片的表单，第二部分是用户可以选择拍照或从相册选择图片的表单，当前状态为“未选择图片”，提示用户可只发送文字。",
+      "reasoning_text": "",
+      "answer_text": "<think>\n\n</think>\n\n图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个部分：第一部分是用户未选择图片的表单，第二部分是用户可以选择拍照或从相册选择图片的表单，当前状态为“未选择图片”，提示用户可只发送文字。",
+      "error": null,
+      "prefill_tps": 11875.080141140346,
+      "decode_tps": 41.911651558658164,
+      "e2e_tps": 34.335542424707384,
+      "server_metrics_after": {
+        "prompt_tokens_seconds": 23.8152,
+        "predicted_tokens_seconds": 52.0228,
+        "kv_cache_usage_ratio": null,
+        "kv_cache_tokens": null,
+        "requests_processing": 0.0
+      },
+      "prompt_tokens_note": "For multimodal hot-path requests, prompt_tokens may reflect processed/new tokens after cache reuse, not necessarily the full logical input length.",
+      "request_index": 2
+    },
+    {
+      "ok": true,
+      "ttft_ms": 253.47046902775764,
+      "ttft_any_ms": 253.46921899914742,
+      "ttft_answer_ms": 253.47046902775764,
+      "e2e_latency_ms": 844.4865630269051,
+      "prompt_tokens": 3501,
+      "completion_tokens": 22,
+      "raw_text_preview": "<think>\n\n</think>\n\n图片显示了一个Qwen图文问答的界面，用户尚未上传图片，只能选择文字或发送文字。",
+      "visible_text_preview": "图片显示了一个Qwen图文问答的界面，用户尚未上传图片，只能选择文字或发送文字。",
+      "raw_text": "<think>\n\n</think>\n\n图片显示了一个Qwen图文问答的界面，用户尚未上传图片，只能选择文字或发送文字。",
+      "visible_text": "图片显示了一个Qwen图文问答的界面，用户尚未上传图片，只能选择文字或发送文字。",
+      "reasoning_text": "",
+      "answer_text": "<think>\n\n</think>\n\n图片显示了一个Qwen图文问答的界面，用户尚未上传图片，只能选择文字或发送文字。",
+      "error": null,
+      "prefill_tps": 13812.25991899121,
+      "decode_tps": 37.22402862354495,
+      "e2e_tps": 26.051332209650667,
+      "server_metrics_after": {
+        "prompt_tokens_seconds": 23.8237,
+        "predicted_tokens_seconds": 51.7891,
+        "kv_cache_usage_ratio": null,
+        "kv_cache_tokens": null,
+        "requests_processing": 0.0
+      },
+      "prompt_tokens_note": "For multimodal hot-path requests, prompt_tokens may reflect processed/new tokens after cache reuse, not necessarily the full logical input length.",
+      "request_index": 3
+    },
+    {
+      "ok": true,
+      "ttft_ms": 250.72666597366333,
+      "ttft_any_ms": 250.7251559793949,
+      "ttft_answer_ms": 250.72666597366333,
+      "e2e_latency_ms": 1255.5957809984684,
+      "prompt_tokens": 3501,
+      "completion_tokens": 45,
+      "raw_text_preview": "<think>\n\n</think>\n\n图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个部分：上方是用户输入描述图片的文本框，下方是用户输入问题并可选择拍照或从相册选择图片的表单。",
+      "visible_text_preview": "图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个部分：上方是用户输入描述图片的文本框，下方是用户输入问题并可选择拍照或从相册选择图片的表单。",
+      "raw_text": "<think>\n\n</think>\n\n图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个部分：上方是用户输入描述图片的文本框，下方是用户输入问题并可选择拍照或从相册选择图片的表单。",
+      "visible_text": "图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个部分：上方是用户输入描述图片的文本框，下方是用户输入问题并可选择拍照或从相册选择图片的表单。",
+      "reasoning_text": "",
+      "answer_text": "<think>\n\n</think>\n\n图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个部分：上方是用户输入描述图片的文本框，下方是用户输入问题并可选择拍照或从相册选择图片的表单。",
+      "error": null,
+      "prefill_tps": 13963.413051437255,
+      "decode_tps": 44.78195152697989,
+      "e2e_tps": 35.83955973809926,
+      "server_metrics_after": {
+        "prompt_tokens_seconds": 23.8325,
+        "predicted_tokens_seconds": 51.607,
+        "kv_cache_usage_ratio": null,
+        "kv_cache_tokens": null,
+        "requests_processing": 0.0
+      },
+      "prompt_tokens_note": "For multimodal hot-path requests, prompt_tokens may reflect processed/new tokens after cache reuse, not necessarily the full logical input length.",
+      "request_index": 4
+    },
+    {
+      "ok": true,
+      "ttft_ms": 240.907968968153,
+      "ttft_any_ms": 240.90671899914742,
+      "ttft_answer_ms": 240.907968968153,
+      "e2e_latency_ms": 1096.694323003292,
+      "prompt_tokens": 3501,
+      "completion_tokens": 38,
+      "raw_text_preview": "<think>\n\n</think>\n\n图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个表单：第一个表单要求用户描述一张图片，第二个表单允许用户上传文字或图片作为问题输入。",
+      "visible_text_preview": "图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个表单：第一个表单要求用户描述一张图片，第二个表单允许用户上传文字或图片作为问题输入。",
+      "raw_text": "<think>\n\n</think>\n\n图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个表单：第一个表单要求用户描述一张图片，第二个表单允许用户上传文字或图片作为问题输入。",
+      "visible_text": "图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个表单：第一个表单要求用户描述一张图片，第二个表单允许用户上传文字或图片作为问题输入。",
+      "reasoning_text": "",
+      "answer_text": "<think>\n\n</think>\n\n图片显示了一个“Qwen 图文问答 Demo”的界面，包含两个表单：第一个表单要求用户描述一张图片，第二个表单允许用户上传文字或图片作为问题输入。",
+      "error": null,
+      "prefill_tps": 14532.520509783622,
+      "decode_tps": 44.403605900964976,
+      "e2e_tps": 34.649582115039294,
+      "server_metrics_after": {
+        "prompt_tokens_seconds": 23.841,
+        "predicted_tokens_seconds": 51.4511,
+        "kv_cache_usage_ratio": null,
+        "kv_cache_tokens": null,
+        "requests_processing": 0.0
+      },
+      "prompt_tokens_note": "For multimodal hot-path requests, prompt_tokens may reflect processed/new tokens after cache reuse, not necessarily the full logical input length.",
+      "request_index": 5
+    }
+  ]
+}

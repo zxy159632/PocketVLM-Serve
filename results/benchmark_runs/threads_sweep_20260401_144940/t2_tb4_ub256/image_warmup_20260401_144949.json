@@ -1,0 +1,111 @@
+{
+  "started_at": 1775026189.7499785,
+  "started_at_iso": "2026-04-01T14:49:49.749981+08:00",
+  "mode": "multimodal",
+  "api_url": "http://127.0.0.1:8081/v1/chat/completions",
+  "metrics_url": "http://127.0.0.1:8081/metrics",
+  "metrics_available": true,
+  "model": "qwen35-vlm",
+  "case": null,
+  "requests": 1,
+  "concurrency": 1,
+  "max_tokens": 64,
+  "temperature": 0.2,
+  "stream": true,
+  "prompt": "请简洁描述图片内容。",
+  "image_path": "/data/data/com.termux/files/home/storage/dcim/Camera/test.jpg",
+  "pid": 32287,
+  "summary": {
+    "requests_total": 1,
+    "requests_ok": 1,
+    "success_rate": 1.0,
+    "ttft_ms": {
+      "mean": 255602.5086529851,
+      "p50": 255602.5086529851,
+      "p95": 255602.5086529851,
+      "min": 255602.5086529851,
+      "max": 255602.5086529851
+    },
+    "e2e_latency_ms": {
+      "mean": 258823.0519849956,
+      "p50": 258823.0519849956,
+      "p95": 258823.0519849956,
+      "min": 258823.0519849956,
+      "max": 258823.0519849956
+    },
+    "prefill_tps": {
+      "mean": 13.693136340659795,
+      "p50": 13.693136340659795,
+      "p95": 13.693136340659795,
+      "min": 13.693136340659795,
+      "max": 13.693136340659795
+    },
+    "decode_tps": {
+      "mean": 19.872423191414207,
+      "p50": 19.872423191414207,
+      "p95": 19.872423191414207,
+      "min": 19.872423191414207,
+      "max": 19.872423191414207
+    },
+    "e2e_tps": {
+      "mean": 0.2472731833936885,
+      "p50": 0.2472731833936885,
+      "p95": 0.2472731833936885,
+      "min": 0.2472731833936885,
+      "max": 0.2472731833936885
+    },
+    "prompt_tokens": {
+      "mean": 3500.0,
+      "p50": 3500.0,
+      "p95": 3500.0,
+      "min": 3500.0,
+      "max": 3500.0
+    },
+    "completion_tokens": {
+      "mean": 64.0,
+      "p50": 64.0,
+      "p95": 64.0,
+      "min": 64.0,
+      "max": 64.0
+    }
+  },
+  "aggregate": {
+    "wall_time_ms": 258823.0519849956
+  },
+  "process_memory": {
+    "rss_kb_min": 1513156,
+    "rss_kb_max": 1985348,
+    "pss_kb_min": 1510697,
+    "pss_kb_max": 1981733
+  },
+  "raw_results": [
+    {
+      "ok": true,
+      "ttft_ms": 255602.5086529851,
+      "ttft_any_ms": 255602.5066729784,
+      "ttft_answer_ms": 255602.5086529851,
+      "e2e_latency_ms": 258823.0519849956,
+      "prompt_tokens": 3500,
+      "completion_tokens": 64,
+      "raw_text_preview": "<think>\n\n</think>\n\n这是一张手机截图，显示的是一个名为“Qwen 图文问答 Demo”的界面，用于测试或演示大模型。\n\n- 顶部显示时间为15:08，电池32%。\n- 页面分为两个部分：\n  1. **第一部分**：\n     -",
+      "visible_text_preview": "这是一张手机截图，显示的是一个名为“Qwen 图文问答 Demo”的界面，用于测试或演示大模型。\n\n- 顶部显示时间为15:08，电池32%。\n- 页面分为两个部分：\n  1. **第一部分**：\n     -",
+      "raw_text": "<think>\n\n</think>\n\n这是一张手机截图，显示的是一个名为“Qwen 图文问答 Demo”的界面，用于测试或演示大模型。\n\n- 顶部显示时间为15:08，电池32%。\n- 页面分为两个部分：\n  1. **第一部分**：\n     -",
+      "visible_text": "这是一张手机截图，显示的是一个名为“Qwen 图文问答 Demo”的界面，用于测试或演示大模型。\n\n- 顶部显示时间为15:08，电池32%。\n- 页面分为两个部分：\n  1. **第一部分**：\n     -",
+      "reasoning_text": "",
+      "answer_text": "<think>\n\n</think>\n\n这是一张手机截图，显示的是一个名为“Qwen 图文问答 Demo”的界面，用于测试或演示大模型。\n\n- 顶部显示时间为15:08，电池32%。\n- 页面分为两个部分：\n  1. **第一部分**：\n     -",
+      "error": null,
+      "prefill_tps": 13.693136340659795,
+      "decode_tps": 19.872423191414207,
+      "e2e_tps": 0.2472731833936885,
+      "server_metrics_after": {
+        "prompt_tokens_seconds": 13.7623,
+        "predicted_tokens_seconds": 24.4792,
+        "kv_cache_usage_ratio": null,
+        "kv_cache_tokens": null,
+        "requests_processing": 0.0
+      },
+      "prompt_tokens_note": "For multimodal hot-path requests, prompt_tokens may reflect processed/new tokens after cache reuse, not necessarily the full logical input length.",
+      "request_index": 1
+    }
+  ]
+}

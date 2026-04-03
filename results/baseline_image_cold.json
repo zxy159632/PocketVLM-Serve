@@ -1,0 +1,111 @@
+{
+  "started_at": 1775021839.7151973,
+  "started_at_iso": "2026-04-01T13:37:19.715199+08:00",
+  "mode": "multimodal",
+  "api_url": "http://127.0.0.1:8081/v1/chat/completions",
+  "metrics_url": "http://127.0.0.1:8081/metrics",
+  "metrics_available": true,
+  "model": "qwen35-vlm",
+  "case": "image_short_64",
+  "requests": 1,
+  "concurrency": 1,
+  "max_tokens": 64,
+  "temperature": 0.2,
+  "stream": true,
+  "prompt": "请用一句话简洁描述图片内容。",
+  "image_path": "/data/data/com.termux/files/home/storage/dcim/Camera/test.jpg",
+  "pid": 25949,
+  "summary": {
+    "requests_total": 1,
+    "requests_ok": 1,
+    "success_rate": 1.0,
+    "ttft_ms": {
+      "mean": 198925.53570601344,
+      "p50": 198925.53570601344,
+      "p95": 198925.53570601344,
+      "min": 198925.53570601344,
+      "max": 198925.53570601344
+    },
+    "e2e_latency_ms": {
+      "mean": 199582.27232000232,
+      "p50": 199582.27232000232,
+      "p95": 199582.27232000232,
+      "min": 199582.27232000232,
+      "max": 199582.27232000232
+    },
+    "prefill_tps": {
+      "mean": 17.599550442704505,
+      "p50": 17.599550442704505,
+      "p95": 17.599550442704505,
+      "min": 17.599550442704505,
+      "max": 17.599550442704505
+    },
+    "decode_tps": {
+      "mean": 42.63505247550315,
+      "p50": 42.63505247550315,
+      "p95": 42.63505247550315,
+      "min": 42.63505247550315,
+      "max": 42.63505247550315
+    },
+    "e2e_tps": {
+      "mean": 0.14029302139172917,
+      "p50": 0.14029302139172917,
+      "p95": 0.14029302139172917,
+      "min": 0.14029302139172917,
+      "max": 0.14029302139172917
+    },
+    "prompt_tokens": {
+      "mean": 3501.0,
+      "p50": 3501.0,
+      "p95": 3501.0,
+      "min": 3501.0,
+      "max": 3501.0
+    },
+    "completion_tokens": {
+      "mean": 28.0,
+      "p50": 28.0,
+      "p95": 28.0,
+      "min": 28.0,
+      "max": 28.0
+    }
+  },
+  "aggregate": {
+    "wall_time_ms": 199582.27232000232
+  },
+  "process_memory": {
+    "rss_kb_min": 1095600,
+    "rss_kb_max": 1613540,
+    "pss_kb_min": 1093215,
+    "pss_kb_max": 1610481
+  },
+  "raw_results": [
+    {
+      "ok": true,
+      "ttft_ms": 198925.53570601344,
+      "ttft_any_ms": 198925.53383100033,
+      "ttft_answer_ms": 198925.53570601344,
+      "e2e_latency_ms": 199582.27232000232,
+      "prompt_tokens": 3501,
+      "completion_tokens": 28,
+      "raw_text_preview": "<think>\n\n</think>\n\n这是一张显示“Qwen 图文问答 Demo”的截图，用户尚未上传图片，处于等待上传或选择图片的界面。",
+      "visible_text_preview": "这是一张显示“Qwen 图文问答 Demo”的截图，用户尚未上传图片，处于等待上传或选择图片的界面。",
+      "raw_text": "<think>\n\n</think>\n\n这是一张显示“Qwen 图文问答 Demo”的截图，用户尚未上传图片，处于等待上传或选择图片的界面。",
+      "visible_text": "这是一张显示“Qwen 图文问答 Demo”的截图，用户尚未上传图片，处于等待上传或选择图片的界面。",
+      "reasoning_text": "",
+      "answer_text": "<think>\n\n</think>\n\n这是一张显示“Qwen 图文问答 Demo”的截图，用户尚未上传图片，处于等待上传或选择图片的界面。",
+      "error": null,
+      "prefill_tps": 17.599550442704505,
+      "decode_tps": 42.63505247550315,
+      "e2e_tps": 0.14029302139172917,
+      "server_metrics_after": {
+        "prompt_tokens_seconds": 21.3201,
+        "predicted_tokens_seconds": 43.2394,
+        "kv_cache_usage_ratio": null,
+        "kv_cache_tokens": null,
+        "requests_processing": 0.0
+      },
+      "prompt_tokens_note": "For multimodal hot-path requests, prompt_tokens may reflect processed/new tokens after cache reuse, not necessarily the full logical input length.",
+      "request_index": 1
+    }
+  ]
+}

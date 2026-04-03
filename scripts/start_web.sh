@@ -11,7 +11,7 @@ mkdir -p "$LOG_DIR" "$PID_DIR"
 cd "$WEB_DIR"
 
 echo "启动静态网页服务 ..."
-nohup python -m http.server 8090 --bind 127.0.0.1 \
+nohup python -m http.server 8090 --bind 0.0.0.0 \
   > "$LOG_DIR/web_server.log" 2>&1 &
 
 echo $! > "$PID_DIR/web_server.pid"

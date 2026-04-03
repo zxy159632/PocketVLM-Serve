@@ -27,12 +27,13 @@ echo "启动 llama-server ..."
 nohup ./build/bin/llama-server \
   -m "$MODEL_FILE" \
   --mmproj "$MMPROJ_FILE" \
-  --host 127.0.0.1 \
+  --host 0.0.0.0 \
   --port 8081 \
-  -c 2048 \
+  -c 8192 \
   --reasoning off \
   --reasoning-format none \
   --alias qwen35-vlm \
+  --metrics \
   > "$LOG_DIR/llama_server.log" 2>&1 &
 
 echo $! > "$PID_DIR/llama_server.pid"

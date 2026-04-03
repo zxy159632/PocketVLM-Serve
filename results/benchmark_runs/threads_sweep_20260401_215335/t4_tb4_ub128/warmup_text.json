@@ -1,0 +1,110 @@
+{
+  "started_at": 1775051618.8672678,
+  "started_at_iso": "2026-04-01T21:53:38.867270+08:00",
+  "mode": "text",
+  "api_url": "http://127.0.0.1:8081/v1/chat/completions",
+  "metrics_url": "http://127.0.0.1:8081/metrics",
+  "metrics_available": true,
+  "model": "qwen35-vlm",
+  "case": null,
+  "requests": 1,
+  "concurrency": 1,
+  "max_tokens": 32,
+  "temperature": 0.2,
+  "stream": true,
+  "prompt": "请用一句话介绍Transformer。",
+  "image_path": null,
+  "pid": 23789,
+  "summary": {
+    "requests_total": 1,
+    "requests_ok": 1,
+    "success_rate": 1.0,
+    "ttft_ms": {
+      "mean": 134.00385397672653,
+      "p50": 134.00385397672653,
+      "p95": 134.00385397672653,
+      "min": 134.00385397672653,
+      "max": 134.00385397672653
+    },
+    "e2e_latency_ms": {
+      "mean": 926.4288009703159,
+      "p50": 926.4288009703159,
+      "p95": 926.4288009703159,
+      "min": 926.4288009703159,
+      "max": 926.4288009703159
+    },
+    "prefill_tps": {
+      "mean": 126.86202296056737,
+      "p50": 126.86202296056737,
+      "p95": 126.86202296056737,
+      "min": 126.86202296056737,
+      "max": 126.86202296056737
+    },
+    "decode_tps": {
+      "mean": 36.59652577827614,
+      "p50": 36.59652577827614,
+      "p95": 36.59652577827614,
+      "min": 36.59652577827614,
+      "max": 36.59652577827614
+    },
+    "e2e_tps": {
+      "mean": 31.302999183127945,
+      "p50": 31.302999183127945,
+      "p95": 31.302999183127945,
+      "min": 31.302999183127945,
+      "max": 31.302999183127945
+    },
+    "prompt_tokens": {
+      "mean": 17.0,
+      "p50": 17.0,
+      "p95": 17.0,
+      "min": 17.0,
+      "max": 17.0
+    },
+    "completion_tokens": {
+      "mean": 29.0,
+      "p50": 29.0,
+      "p95": 29.0,
+      "min": 29.0,
+      "max": 29.0
+    }
+  },
+  "aggregate": {
+    "wall_time_ms": 926.4288009703159
+  },
+  "process_memory": {
+    "rss_kb_min": 1505500,
+    "rss_kb_max": 1512704,
+    "pss_kb_min": 1501970,
+    "pss_kb_max": 1509082
+  },
+  "raw_results": [
+    {
+      "ok": true,
+      "ttft_ms": 134.00385397672653,
+      "ttft_any_ms": 134.00208297371864,
+      "ttft_answer_ms": 134.00385397672653,
+      "e2e_latency_ms": 926.4288009703159,
+      "prompt_tokens": 17,
+      "completion_tokens": 29,
+      "raw_text_preview": "<think>\n\n</think>\n\nTransformer 是一种通过自注意力机制实现端到端深度学习的通用人工智能架构，能够高效处理长距离依赖关系和复杂语义理解。",
+      "visible_text_preview": "Transformer 是一种通过自注意力机制实现端到端深度学习的通用人工智能架构，能够高效处理长距离依赖关系和复杂语义理解。",
+      "raw_text": "<think>\n\n</think>\n\nTransformer 是一种通过自注意力机制实现端到端深度学习的通用人工智能架构，能够高效处理长距离依赖关系和复杂语义理解。",
+      "visible_text": "Transformer 是一种通过自注意力机制实现端到端深度学习的通用人工智能架构，能够高效处理长距离依赖关系和复杂语义理解。",
+      "reasoning_text": "",
+      "answer_text": "<think>\n\n</think>\n\nTransformer 是一种通过自注意力机制实现端到端深度学习的通用人工智能架构，能够高效处理长距离依赖关系和复杂语义理解。",
+      "error": null,
+      "prefill_tps": 126.86202296056737,
+      "decode_tps": 36.59652577827614,
+      "e2e_tps": 31.302999183127945,
+      "server_metrics_after": {
+        "prompt_tokens_seconds": 186.813,
+        "predicted_tokens_seconds": 36.6162,
+        "kv_cache_usage_ratio": null,
+        "kv_cache_tokens": null,
+        "requests_processing": 0.0
+      },
+      "request_index": 1
+    }
+  ]
+}

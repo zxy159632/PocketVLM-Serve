@@ -1,243 +1,175 @@
-# Android 手机端多模态模型部署实战：Qwen3.5-0.8B + llama.cpp + Termux
+# Android 手机端多模态模型部署与性能测试实战：Qwen3.5-0.8B + llama.cpp + Termux
 
-> 一个面向**推理加速 / 模型部署岗位**的真实工程项目记录。  
-> 目标是**把模型部署到安卓手机本地，以服务形式提供调用**，并沉淀完整的环境搭建、踩坑、定位和取舍过程。
-
----
-
-## 1. 项目简介
-
-本项目分为两条主线：
-
-- **服务端主线**：笔记本侧使用 `vLLM + FastAPI + Web` 跑通本地推理服务，并实现电脑 / 手机同一局域网网页访问。
-- **端侧主线**：安卓手机侧使用 `Termux + llama.cpp + GGUF` 在本地部署多模态模型，并通过 `llama-server` 暴露本地 HTTP 接口，实现：
-  - 纯文本聊天
-  - 图片上传分析
-  - 本地网页 / 脚本调用
-
-本项目最终目标：
-
-1. 能完成从模型格式选择、运行时选型、服务启动到接口调用的完整链路；
-2. 能解释不同推理框架的适用场景；
-3. 能在真实设备上处理部署中的兼容性、推理稳定性和性能取舍问题。
+> 一个面向**大模型部署 / 推理加速方向**的真实工程项目记录。  
+> 目标不是“把模型跑起来就算完成”，而是把**模型选型、端侧部署、服务化封装、基准测试、参数调优、问题定位**完整走通，并沉淀成可复现的项目资料。
 
 ---
 
-## 2. 为什么做这个项目
+## 1. 项目目标
 
-我的求职目标是：
+本项目聚焦两件事：
 
-- AI Infra / 推理加速方向实习大模型部署工程师
+1. **在安卓手机本地部署多模态模型，并以服务形式对外提供调用**；
+2. **围绕真实设备进行性能测试与参数调优**，形成可解释的性能结论，而不是只展示“能跑”。
 
-因此项目重点不是 UI，也不是花哨功能，而是：
+最终交付形态：
+
+- 手机本地运行 `llama.cpp/llama-server`
+- 提供 OpenAI-compatible HTTP 接口
+- 支持文本请求与图像请求
+- 提供网页 Demo 与 Python 测试脚本
+- 提供一套可复用的 benchmark 脚本链路
+- 输出结构化测试结果（JSON + summary）
+
+---
+
+## 2. 项目背景与技术取舍
+
+项目重心是**大模型部署 / 推理加速方向实习**。因此本项目的重点不是做复杂前端，而是展示以下能力：
 
 - 推理框架选型
+- 端侧模型格式适配
 - 服务化封装
-- 模型格式适配
-- 移动端可复现部署
-- 问题定位与工程取舍
+- 测试脚本编写
+- 指标采集与结果分析
+- 真实设备上的性能调优与问题定位
 
-整个项目始终坚持一个原则：**稳定、可复现、可解释 **
+项目中的核心取舍如下：
 
----
+### 2.1 为什么手机端选择 llama.cpp
 
-## 3. 技术路线选择
+手机端目标是：
 
-### 3.1 为什么笔记本端用 vLLM
-
-笔记本端目标是先跑通一个典型的服务端推理系统，因此采用：
-
-- `vLLM`：做模型推理服务
-- `FastAPI`：做 API 服务层
-- `HTML/JS`：做简单前端页面
-
-这一阶段重点是理解：
-
-- 本地模型服务如何启动
-- OpenAI-compatible API 如何调用
-- 文本 / 文件 / 图片三类输入如何组织
-
-### 3.2 为什么手机端不用 vLLM / LMDeploy，而改用 llama.cpp
-
-手机端目标已经不是高吞吐服务，而是：
-
-- 端侧本地部署
+- 本地离线推理
 - 资源受限环境运行
-- 本地 HTTP 服务调用
+- 通过 HTTP 接口提供统一调用入口
 
-因此最终选择：
+因此最终采用：
 
-- `llama.cpp`：轻量推理引擎
-- `GGUF`：移动端更友好的模型格式
-- `Termux`：把安卓手机变成一个可操作的 Linux 风格环境
-- `llama-server`：提供本地 HTTP 接口
+- `llama.cpp`：轻量、可编译、适合端侧 CPU 路线
+- `GGUF`：适合 llama.cpp 的模型格式
+- `Termux`：将安卓手机转成可操作的 Linux 风格环境
+- `llama-server`：直接暴露 OpenAI-compatible 接口
 
----
+### 2.2 为什么最终以 CPU 路线为主
 
-## 4. 最终项目形态
+项目中完整尝试过 Vulkan / GPU 路线，但在安卓设备上遇到 shader / compute pipeline 创建失败，最终表现为底层崩溃或段错误。经过排查，这不是命令写错，而更偏向：
 
-### 4.1 笔记本端项目结构
+- 安卓 GPU 驱动兼容性
+- Vulkan shader 支持成熟度
+- K 系列量化在移动端 GPU 上的实际可用性
 
-```text
-test_code/
-├─ fastapi_server/
-│  ├─ main.py
-│  ├─ config.py
-│  ├─ services/
-│  │  └─ vllm_client.py
-│  ├─ web/
-│  │  └─ index.html
-│  ├─ uploads/
-│  └─ logs/
-├─ scripts/
-│  ├─ start_vllm.sh
-│  ├─ start_fastapi.sh
-│  └─ test_curl.sh
-└─ README.md
-```
-
-### 4.2 手机端项目结构
-
-```text
-mobile_llm/
-├── llama.cpp/
-├── models/
-│   └── Qwen_Qwen3.5-0.8B-Q4_K_M/
-│       ├── Qwen3.5-0.8B-Q4_K_M.gguf
-│       └── mmproj-F16.gguf
-├── scripts/
-│   ├── start_server.sh
-│   ├── warmup.sh
-│   ├── test_text.sh
-│   ├── test_image.py
-│   └── start_web.sh
-├── web_demo/
-│   └── index.html
-└── venvs/
-    └── modelscope_env/
-```
+因此当前版本的**稳定演示与性能测试全部基于 CPU 路线**。这也是一个典型的工程取舍：优先可复现、可解释、可稳定运行。
 
 ---
 
-## 5. 笔记本端：
+## 3. 硬件与软件环境
 
-- 移步仓库：https://github.com/zxy159632/-vLLM-FastAPI-
+### 3.1 设备环境
 
----
+- 手机：**Redmi K90（12GB + 256GB）**
+- 系统环境：Android + Termux
+- 推理方式：**CPU 推理**
 
-## 6. 手机端：
+### 3.2 模型与运行时
 
-不满足于“手机只是前端，电脑在推理”，而是进一步做了：
+- 主模型：`Qwen3.5-0.8B-Q4_K_M.gguf`
+- 多模态投影：`mmproj-F16.gguf`
+- 推理引擎：`llama.cpp`
+- 服务组件：`llama-server`
+- 接口协议：OpenAI-compatible API
 
-> **将模型部署到安卓手机本地，并以服务方式提供调用。**
-
-最终服务接口形态：
+### 3.3 服务地址
 
 ```text
 http://127.0.0.1:8081/v1/chat/completions
 ```
 
-这样后续无论是：
+模型服务启动时使用别名：
 
-- 浏览器网页
-- Python 脚本
-- 自己写的 Android App
-
-本质上都可以调用同一个本地服务。
+```text
+qwen35-vlm
+```
 
 ---
 
-## 7. 手机端完整流程
+## 4. 当前项目结构
 
-### 7.1 前期准备
+当前仓库已经从“单纯部署演示”扩展为“部署 + 测试 + 结果沉淀”的完整工程结构：
 
-设备与环境：
+```text
+mobile_llm/
+├── llama.cpp/
+├── logs/
+├── models/
+├── pids/
+├── results/
+│   ├── baseline_*.json
+│   ├── benchmark_runs/
+│   │   ├── threads_sweep_20260401_144940/
+│   │   ├── threads_sweep_20260401_215335/
+│   │   └── warmup/
+├── scripts/
+│   ├── boot_demo.sh
+│   ├── start_qwen_server.sh
+│   ├── start_bench.sh
+│   ├── sweep_threads.sh
+│   ├── warmup.sh
+│   ├── warmup_image.sh
+│   ├── start_web.sh
+│   ├── stop_demo.sh
+│   ├── test_image.py
+│   ├── watch_llama_log.sh
+│   └── watch_web_log.sh
+├── src/
+│   ├── benchmarks/
+│   │   ├── benchmark_cases.py
+│   │   ├── benchmark_openai_termux.py
+│   │   ├── memory_sampler.py
+│   │   ├── metrics_parser.py
+│   │   ├── report_summary.py
+│   │   └── result_schema.py
+│   ├── client/
+│   │   └── openai_client.py
+│   └── utils/
+│       ├── image_utils.py
+│       ├── json_io.py
+│       ├── text_clean.py
+│       └── time_utils.py
+├── web_demo/
+│   └── index.html
+└── README.md
+```
 
-- 手机：Redmi K90（12GB + 256GB）
-- Android 端安装：`Termux`
-- 网络辅助：通过网页版 `code-server` 连接手机 Termux，方便编辑脚本和源码
+与测试前版本相比，新增的重点不再只是启动脚本，而是：
 
-### 7.2 手机联通与远程编辑
+- benchmark case 定义
+- OpenAI-compatible benchmark 主程序
+- `/metrics` 解析与 token 统计
+- 进程 RSS / PSS 采样
+- 参数 sweep 脚本
+- 结果 JSON 与 summary 输出
 
-在 Termux 中执行：
+---
+
+## 5. 手机端部署链路
+
+## 5.1 基础环境准备
 
 ```bash
 pkg update
 pkg upgrade
 termux-wake-lock
-pkg install openssh
-sshd
-ifconfig
-passwd
-whoami
-pkg install tur-repo -y
-pkg install code-server -y
+pkg install -y git cmake clang make python wget curl ninja
 ```
 
-然后修改 `~/.config/code-server/config.yaml` 中的监听地址为 `0.0.0.0:8080`，再执行：
+如需访问手机相册图片：
 
 ```bash
-code-server --bind-addr 0.0.0.0:8080
+termux-setup-storage
 ```
 
-电脑浏览器访问：
-
-```text
-http://手机IP:8080/
-```
-
-这样就能在电脑浏览器里编辑手机上的文件，大幅提升开发效率。
-
----
-
-## 8. 模型选择与格式适配
-
-### 8.1 为什么不用现有 AutoRound 模型文件直接上手机
-
-我在笔记本端使用过 `Qwen3.5-0.8B-int4-AutoRound` 跑 vLLM，这对服务端实验很好用；但端侧运行时和服务端运行时并不完全相同。
-
-手机端最终采用的是 **GGUF 格式模型**，原因是：
-
-- `llama.cpp` 原生支持 GGUF
-- GGUF 更适合资源受限设备的本地推理
-- 更适合在端侧快速搭建 CLI 和 HTTP 服务
-
-### 8.2 最终采用的模型
-
-前期通过 ModelScope 下载第三方模型文件：
-
-```bash
-modelscope download \
-  --model Manojb/Qwen_Qwen3.5-0.8B-Q4_K_M.gguf \
-  --local_dir ~/zxy/mobile_llm/models/Qwen_Qwen3.5-0.8B-Q4_K_M
-```
-
-后续又替换为更规范的一组官方 / 主流社区文件：
-
-```bash
-modelscope download --model unsloth/Qwen3.5-0.8B-GGUF --include "Qwen3.5-0.8B-Q4_K_M.gguf" --local_dir /data/data/com.termux/files/home/zxy/mobile_llm/models/Qwen_Qwen3.5-0.8B-Q4_K_M
-modelscope download --model unsloth/Qwen3.5-0.8B-GGUF --include "mmproj-F16.gguf" --local_dir /data/data/com.termux/files/home/zxy/mobile_llm/models/Qwen_Qwen3.5-0.8B-Q4_K_M
-```
-
-最终手机端主演示采用：
-
-- `Qwen3.5-0.8B-Q4_K_M.gguf`
-- `mmproj-F16.gguf`
-
-三方模型也调通了，但面试与演示以文件命名更规范的版本为主。
-
----
-
-## 9. 手机端环境搭建
-
-### 9.1 基础工具安装
-
-```bash
-pkg install -y git cmake clang make python wget curl
-pkg install -y ninja
-```
-
-### 9.2 创建目录
+### 5.2 目录准备
 
 ```bash
 mkdir -p ~/zxy/mobile_llm/models
@@ -245,9 +177,9 @@ mkdir -p ~/zxy/mobile_llm/scripts
 mkdir -p ~/zxy/mobile_llm/venvs
 ```
 
-### 9.3 独立 Python 环境
+### 5.3 Python 环境
 
-手机端没有强行折腾 conda，而是采用更稳的 `venv`：
+项目中用于模型下载与 benchmark 的 Python 依赖采用 `venv`，避免在手机端引入过重的环境管理：
 
 ```bash
 python -m venv ~/zxy/mobile_llm/venvs/modelscope_env
@@ -256,381 +188,560 @@ pip install -U pip setuptools wheel
 pip install -U modelscope
 ```
 
-这里的工程取舍是：
+### 5.4 下载模型
 
-- **目标是快速稳定完成部署**，不是在手机上复刻 PC 端一整套发行版级包管理；
-- 对于下载模型这类 Python 任务，`venv` 足够满足隔离需求；
-- `llama.cpp` 的编译与运行则保持原生 Termux 路线，更稳。
+```bash
+modelscope download --model unsloth/Qwen3.5-0.8B-GGUF \
+  --include "Qwen3.5-0.8B-Q4_K_M.gguf" \
+  --local_dir /data/data/com.termux/files/home/zxy/mobile_llm/models/Qwen_Qwen3.5-0.8B-Q4_K_M
 
----
+modelscope download --model unsloth/Qwen3.5-0.8B-GGUF \
+  --include "mmproj-F16.gguf" \
+  --local_dir /data/data/com.termux/files/home/zxy/mobile_llm/models/Qwen_Qwen3.5-0.8B-Q4_K_M
+```
 
-## 10. 编译 llama.cpp
-
-### 10.1 CPU 版本先跑通
+### 5.5 编译 llama.cpp
 
 ```bash
 cd ~/zxy/mobile_llm
 git clone https://github.com/ggml-org/llama.cpp.git
 cd llama.cpp
-
 cmake -B build
 cmake --build build -j 4
 ```
 
-如果手机性能或温度压力较大，则降为：
-
-```bash
-cmake --build build -j 2
-```
-
-### 10.2 检查产物
-
-```bash
-ls -lh build/bin
-```
-
-理想情况下至少看到：
+编译完成后至少应看到：
 
 - `llama-cli`
 - `llama-server`
 
----
-
-## 11. CLI 验证：先证明模型能跑
-
-在真正起服务前，先用 CLI 做最小验证：
+### 5.6 CLI 最小验证
 
 ```bash
 MODEL_DIR="$HOME/zxy/mobile_llm/models/Qwen_Qwen3.5-0.8B-Q4_K_M"
 MODEL_FILE=$(find "$MODEL_DIR" -maxdepth 1 -name "*.gguf" ! -name "mmproj*" | head -n 1)
-MMPROJ_FILE=$(find "$MODEL_DIR" -maxdepth 1 -name "mmproj*.gguf" | head -n 1)
 
 ./build/bin/llama-cli \
   -m "$MODEL_FILE" \
   -p "请用三句话介绍一下 Transformer。"
 ```
 
-如果这一步能正常输出，说明：
-
-- GGUF 主模型没问题
-- `llama.cpp` 编译成功
-- 手机 CPU 路线基本打通
+CLI 跑通后，再进入服务化阶段。
 
 ---
 
-## 12. 启动手机本地服务
+## 6. 服务化封装
 
-### 12.1 最小启动命令
+### 6.1 正式服务启动
+
+项目中实际使用的启动脚本为：
 
 ```bash
-./build/bin/llama-server \
-  -m "$MODEL_FILE" \
-  --mmproj "$MMPROJ_FILE" \
-  --host 127.0.0.1 \
-  --port 8081 \
-  -c 2048
+bash scripts/start_qwen_server.sh
 ```
 
-### 12.2 文本请求验证
+核心启动参数：
+
+- `--mmproj`：启用图像路径
+- `-c 8192`：上下文窗口设置为 8192
+- `--reasoning off`：关闭 reasoning，避免 `<think>` 长时间占用输出
+- `--metrics`：开启 `/metrics`，便于后续 benchmark 采集
+- `--alias qwen35-vlm`：设置统一模型名
+
+对应服务接口：
+
+```text
+http://127.0.0.1:8081/v1/chat/completions
+http://127.0.0.1:8081/metrics
+```
+
+### 6.2 Web Demo
+
+启动静态网页：
 
 ```bash
-curl http://127.0.0.1:8081/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "Qwen3.5-0.8B",
-    "messages": [
-      {
-        "role": "user",
-        "content": "请用三句话介绍 KV Cache 的作用。"
-      }
-    ],
-    "temperature": 0.7,
-    "max_tokens": 128
-  }'
+bash scripts/start_web.sh
 ```
 
-### 12.3 图片请求验证
-
-先把图片转为 base64，再构造 OpenAI Vision 风格请求。
-
----
-
-## 13. 图片分析链路
-
-### 13.1 图片位置
-
-手机拍照后的图片通常位于：
+访问地址：
 
 ```text
-/storage/emulated/0/DCIM/Camera/test.jpg
+http://127.0.0.1:8090/index.html
 ```
 
-在 Termux 中拿到存储权限：
+### 6.3 一键演示脚本
+
+项目中提供：
 
 ```bash
-termux-setup-storage
+bash scripts/boot_demo.sh
 ```
 
-### 13.2 图片转 base64
+该脚本会完成：
+
+1. 启动 `llama-server`
+2. 轮询等待服务就绪
+3. 执行文本 warmup
+4. 启动本地网页服务
+
+停止服务：
 
 ```bash
-base64 -w 0 ~/storage/shared/DCIM/Camera/test.jpg > ~/zxy/mobile_llm/test_image.b64
+bash scripts/stop_demo.sh
 ```
 
-若 `-w 0` 不支持，则改用 Python。
+---
 
-### 13.3 发送图片请求
+## 7. Benchmark 体系设计
+
+这部分是测试后版本最核心的新增内容。
+
+### 7.1 Benchmark 目标
+
+性能测试不是只看“快不快”，而是分解为以下几个维度：
+
+- **TTFT**：首 token 时间
+- **E2E latency**：完整响应时间
+- **Prefill TPS**：prefill 阶段吞吐
+- **Decode TPS**：decode 阶段吞吐
+- **E2E TPS**：整体端到端吞吐
+- **RSS / PSS**：进程内存占用区间
+- **成功率**：请求是否稳定完成
+
+### 7.2 Benchmark 代码结构
+
+- `src/benchmarks/benchmark_cases.py`：统一定义测试 case
+- `src/benchmarks/benchmark_openai_termux.py`：主 benchmark 程序
+- `src/benchmarks/metrics_parser.py`：解析 `/metrics`
+- `src/benchmarks/memory_sampler.py`：采样进程内存
+- `src/benchmarks/result_schema.py`：统一整理结果结构与 summary
+- `src/benchmarks/report_summary.py`：输出简版 summary
+
+### 7.3 预置测试 case
+
+当前版本包含 3 个核心 case：
+
+- `text_short_64`：短文本、输出上限 64
+- `text_medium_128`：中等文本、输出上限 128
+- `image_short_64`：短图像描述、输出上限 64
+
+### 7.4 统一 benchmark 启动方式
+
+启动带 metrics 的 benchmark 服务：
 
 ```bash
-IMG_B64=$(cat ~/zxy/mobile_llm/test_image.b64)
-
-curl http://127.0.0.1:8081/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d "{\
-    \"model\": \"Qwen3.5-0.8B\",\
-    \"messages\": [\
-      {\
-        \"role\": \"user\",\
-        \"content\": [\
-          {\
-            \"type\": \"text\",\
-            \"text\": \"请描述这张图片的主要内容，并尽量简洁。\"\
-          },\
-          {\
-            \"type\": \"image_url\",\
-            \"image_url\": {\
-              \"url\": \"data:image/jpeg;base64,$IMG_B64\"\
-            }\
-          }\
-        ]\
-      }\
-    ],\
-    \"temperature\": 0.2,\
-    \"max_tokens\": 128\
-  }"
+bash scripts/start_bench.sh
 ```
 
-同时保留了一个更稳的 `test_image.py` 脚本，避免 shell 拼接过长 JSON 时出错。
+单 case 测试：
+
+```bash
+python src/benchmarks/benchmark_openai_termux.py \
+  --url http://127.0.0.1:8081/v1/chat/completions \
+  --metrics-url http://127.0.0.1:8081/metrics \
+  --model qwen35-vlm \
+  --case text_short_64 \
+  --requests 10 \
+  --pid-file ~/zxy/mobile_llm/pids/llama_server.pid \
+  --output-json results/sample_text_short.json
+```
+
+批量 sweep：
+
+```bash
+bash scripts/sweep_threads.sh
+```
+
+当前 sweep 脚本支持两类实验：
+
+1. `-t / -tb` sweep：测试 `THREADS` 与 `THREADS_BATCH` 的影响
+2. `-ub` sweep：测试 `UBATCH` 的影响
 
 ---
 
-## 14. 我遇到的主要问题，以及如何解决
+## 8. 测试配置
 
-这一部分是本项目最重要的工程价值之一。
+本仓库内已经保留了两轮正式 sweep 结果，时间均为 **2026-04-01**。
 
-### 问题 1：新版 llama.cpp Vulkan 编译报错
+### 8.1 统一环境参数
 
-报错示例：
+大部分 sweep 共享以下核心配置：
 
-```text
-error: no viable overloaded '='
-```
+- `CTX_SIZE=8192`
+- `PARALLEL=2`
+- `BATCH_SIZE=512`
+- `CONCURRENCY_TEXT=1`
+- `CONCURRENCY_IMAGE=1`
+- `TEXT_REQUESTS=10`
+- `IMAGE_REQUESTS=5`
+- 模型别名：`qwen35-vlm`
+- 图像样本：`~/storage/dcim/Camera/test.jpg`
 
-定位到：
+### 8.2 线程 sweep
 
-```text
-llama.cpp/ggml/src/ggml-vulkan/ggml-vulkan.cpp
-```
+固定：
 
-对应代码使用了某段初始化写法，在当前环境下不兼容。
+- `UBATCH=256`
 
-#### 处理方式
-将 `device_create_info = { ... }` 改成链式 `.setFlags() / .setQueueCreateInfos()` 的写法后重新编译。
+组合：
 
-#### 工程结论
-这类问题说明：
+- `t=2, tb=4`
+- `t=4, tb=4`
+- `t=4, tb=6`
+- `t=6, tb=6`
 
-- 手机端部署不是“下个模型就跑”；
-- 运行时、系统头文件、Vulkan C++ 封装版本之间会出现兼容问题；
-- 阅读和修改少量 C++ 源码是部署岗位必须具备的能力之一。
+### 8.3 UBATCH sweep
 
----
+固定：
 
-### 问题 2：Vulkan GPU 路线启动时 shader / pipeline 崩溃
+- `t=4, tb=4`
 
-报错示例：
+组合：
 
-```text
-Compute pipeline creation failed for mul_mat_vec_q6_k_f32_f32
-vk::Device::createComputePipeline: ErrorUnknown
-Segmentation fault
-```
-
-#### 初始困惑
-我下载的是 `Q4_K_M` 模型，为什么错误里会出现 `q6_k`？
-
-#### 原因分析
-`Q4_K_M` 这类 K 系列量化并不是“纯 4bit 到底”，而是为了平衡精度，会在某些关键层混合使用 Q5_K / Q6_K 等内部数据表示。电脑 GPU 驱动一般能较好支持这类混合精度 shader，但安卓手机 GPU 驱动在这方面成熟度明显弱很多，于是就出现了 shader 编译失败、底层驱动崩溃、服务段错误退出等问题。
-
-#### 工程结论
-- **不是模型坏了，也不是命令写错了**；
-- 问题更偏底层驱动与运行时兼容；
-- GPU 路线我已经完整尝试并定位到“驱动 / shader 兼容性”层面；
-- 当前阶段不再继续死磕现场 GPU 演示，而是把 GPU 路线作为“研究过并能解释”的补充材料。
+- `ub=128`
+- `ub=256`
+- `ub=512`
 
 ---
 
-### 问题 3：更换 `Q4_0` 模型后出现 `failed to read magic`
+## 9. 基线测试结果
 
-报错示例：
+### 9.1 文本基线
 
-```text
-gguf_init_from_file_impl: failed to read magic
-llama_model_load_from_file_impl: failed to load model
-```
+| 场景 | 请求数 | 并发 | TTFT mean | E2E mean | Decode TPS mean | PSS max |
+|---|---:|---:|---:|---:|---:|---:|
+| `text_short_64` 顺序 | 10 | 1 | 144.0 ms | 920.4 ms | 57.7 tok/s | 0.80 GiB |
+| `text_medium_128` 顺序 | 10 | 1 | 181.4 ms | 2521.9 ms | 55.0 tok/s | 1.04 GiB |
+| `text_medium_128` 并发 | 20 | 2 | 356.6 ms | 5216.9 ms | 27.2 tok/s（单请求） | 1.69 GiB |
 
-#### 原因分析
-GGUF 文件头前几个字节必须是 `GGUF` 魔数。出现这个错误通常意味着：
+补充说明：
 
-- 文件本身不是合法 GGUF；
-- 路径指向错了（可能指到目录或错误文件）；
-- 下载产物不完整。
+- `text_medium_128` 并发 2 的 aggregate decode 吞吐约为 **49.1 tok/s**。
+- 文本场景整体已经具备较好的稳定性，成功率均为 **100%**。
 
-#### 工程结论
-部署工程里，**文件路径、格式校验、模型来源可靠性** 都必须纳入排查流程，而不是只盯着推理命令。
+### 9.2 图像基线
+
+| 场景 | 请求数 | 并发 | TTFT mean | E2E mean | Decode TPS mean | PSS max |
+|---|---:|---:|---:|---:|---:|---:|
+| `image_short_64` 冷启动 | 1 | 1 | 198925.5 ms | 199582.3 ms | 42.6 tok/s | 1.54 GiB |
+| `image_short_64` 热态 | 5 | 1 | 239.8 ms | 1140.5 ms | 38.9 tok/s | 1.52 GiB |
+
+核心结论：
+
+- **首个图像请求冷启动极慢**，TTFT 约 **198.9 秒**；
+- 一旦视觉路径进入热态，图像 TTFT 可以回到 **约 240 ms**；
+- 因此图像路径的核心问题不是 steady-state 太慢，而是**首图长尾极其严重**。
 
 ---
 
-### 问题 4：模型一直陷入 `<think>`，回答不出最终内容
+## 10. 参数 sweep 结果
+
+## 10.1 `-t / -tb` sweep（固定 `ub=256`）
+
+### 文本结果
+
+| `-t` | `-tb` | case | TTFT mean | E2E mean | Decode TPS mean | PSS max |
+|---:|---:|---|---:|---:|---:|---:|
+| 2 | 4 | `text_short_64` | 188.2 ms | 1363.0 ms | 38.2 tok/s | 2.05 GiB |
+| 4 | 4 | `text_short_64` | 151.4 ms | **842.5 ms** | **57.5 tok/s** | 2.11 GiB |
+| 4 | 6 | `text_short_64` | **131.5 ms** | 1179.1 ms | 48.0 tok/s | 2.11 GiB |
+| 6 | 6 | `text_short_64` | 140.1 ms | 1013.2 ms | 50.2 tok/s | 2.11 GiB |
+| 2 | 4 | `text_medium_128` | 186.4 ms | 3604.4 ms | 38.0 tok/s | 2.18 GiB |
+| 4 | 4 | `text_medium_128` | 197.7 ms | **2861.0 ms** | 49.3 tok/s | 2.26 GiB |
+| 4 | 6 | `text_medium_128` | **165.8 ms** | 2981.2 ms | 47.0 tok/s | 2.31 GiB |
+| 6 | 6 | `text_medium_128` | 179.7 ms | 2893.4 ms | **49.4 tok/s** | 2.31 GiB |
+
+### 图像结果
+
+| `-t` | `-tb` | case | TTFT mean | TTFT p50 | TTFT p95 | E2E mean |
+|---:|---:|---|---:|---:|---:|---:|
+| 2 | 4 | `image_short_64` | 56972.6 ms | **238.1 ms** | 227220.0 ms | 58688.1 ms |
+| 4 | 4 | `image_short_64` | 34993.5 ms | 268.7 ms | 139188.3 ms | 36099.7 ms |
+| 4 | 6 | `image_short_64` | 37750.9 ms | 270.8 ms | 150189.3 ms | 39190.9 ms |
+| 6 | 6 | `image_short_64` | **25749.5 ms** | 347.1 ms | **102016.2 ms** | **27177.7 ms** |
+
+### 线程 sweep 结论
+
+- 对于**文本短输出**，`t=4, tb=4` 的端到端时延最好；`t=4, tb=6` 的 TTFT 最低。
+- 对于**文本中等输出**，`t=4, tb=6` 可以进一步压低 TTFT，但 `t=4, tb=4` / `t=6, tb=6` 在整体 E2E 和 decode 吞吐上更均衡。
+- 对于**图像请求**，不同线程配置只能部分影响平均值，**无法根治首个正式图像请求长尾**。
+
+---
+
+## 10.2 `-ub` sweep（固定 `t=4, tb=4`）
+
+### 文本结果
+
+| `-ub` | case | TTFT mean | E2E mean | Decode TPS mean | PSS max |
+|---:|---|---:|---:|---:|---:|
+| 128 | `text_short_64` | 203.8 ms | 1152.8 ms | 45.6 tok/s | 1.17 GiB |
+| 256 | `text_short_64` | **146.1 ms** | 993.6 ms | 55.0 tok/s | 2.11 GiB |
+| 512 | `text_short_64` | 155.7 ms | **943.1 ms** | **55.0 tok/s** | 1.30 GiB |
+| 128 | `text_medium_128` | 230.4 ms | 3146.8 ms | 44.1 tok/s | 1.18 GiB |
+| 256 | `text_medium_128` | 210.8 ms | 2595.9 ms | 54.0 tok/s | 2.24 GiB |
+| 512 | `text_medium_128` | **192.8 ms** | **2528.6 ms** | **55.1 tok/s** | 1.42 GiB |
+
+### 图像结果
+
+| `-ub` | case | TTFT mean | TTFT p50 | TTFT p95 | E2E mean |
+|---:|---|---:|---:|---:|---:|
+| 128 | `image_short_64` | 38172.3 ms | 250.7 ms | 151949.7 ms | 39374.0 ms |
+| 256 | `image_short_64` | 33050.5 ms | 257.6 ms | 131441.4 ms | 34323.0 ms |
+| 512 | `image_short_64` | **29687.8 ms** | 253.5 ms | **117978.4 ms** | **30773.4 ms** |
+
+### UBATCH sweep 结论
+
+- 在当前设备与模型组合下，**`ub=512` 对文本中等输出最有利**；
+- `ub=256` 与 `ub=512` 都明显优于 `ub=128`；
+- `ub=512` 对图像的 **mean / p95** 也有改善，但**图像长尾仍然存在**；
+- 因此在当前版本中，`ub=512` 是一个更值得保留的方向。
+
+---
+
+## 11. 最终性能结论
+
+### 11.1 文本侧结论
+
+当前版本已经可以给出比较明确的文本侧建议：
+
+#### 若优先追求较短 E2E
+
+推荐：
+
+```text
+-t 4 -tb 4 -ub 512
+```
+
+理由：
+
+- `text_short_64` 的 E2E 已经降到 **943.1 ms**；
+- `text_medium_128` 的 E2E 降到 **2528.6 ms**；
+- decode 吞吐维持在 **约 55 tok/s**；
+- 相比 `ub=128` 更稳定，也优于大部分其他组合。
+
+#### 若优先追求更低 TTFT
+
+可考虑：
+
+```text
+-t 4 -tb 6 -ub 256
+```
+
+理由：
+
+- `text_short_64` TTFT 最低，为 **131.5 ms**；
+- `text_medium_128` TTFT 最低，为 **165.8 ms**。
+
+但该组合不是整体 E2E 最优，更适合强调“首 token 更快”的场景。
+
+### 11.2 图像侧结论
+
+图像侧结论比文本侧更重要，也更有工程价值：
+
+1. **视觉路径 steady-state 并不差**，热态 p50 TTFT 大致在 **238~347 ms**；
+2. **真正的问题是首个正式图像请求的超长尾**；
+3. 即使在执行了 `image warmup` 之后，后续正式测试中仍然能观察到单次 **102~164 秒级** 的异常长尾；
+4. 这说明当前 warmup 方案**没有完全复用正式图像请求的关键路径**，或者存在额外的视觉路径初始化 / cache 失效问题。
+
+换句话说：
+
+- 文本性能已经进入“参数调优阶段”；
+- 图像性能仍然有一个必须单独优化的“首图长尾问题”。
+
+---
+
+## 12. 对图像长尾问题的当前判断
+
+根据仓库中的 warmup 与正式结果，可以得到以下判断：
+
+### 已确认的事实
+
+- 冷启动首图约 **198.9 秒**；
+- warmup 后 steady-state 图像请求可回到 **约 250 ms 级别 TTFT**；
+- 但在 sweep 中，**首个正式图像请求**仍经常出现 **100 秒以上长尾**。
+
+### 当前合理推断
+
+这更像是以下问题之一，而不是单纯线程参数问题：
+
+- warmup 请求与正式图像 case 虽然表面相似，但**服务端内部路径未完全复用**；
+- 首个正式请求触发了额外的视觉相关初始化；
+- warmup 后到正式 case 之间存在 cache 失效、上下文重建或资源回收；
+- 图像路径的初始化收益没有稳定保留到后续正式请求。
+
+### 当前阶段结论
+
+**图像首个正式请求长尾问题仍需单独优化。**
+
+当前版本的 README 不把它写成“已解决”，而是明确记录为：
+
+- 已定位现象
+- 已通过 benchmark 复现
+- 已确认不是普通文本参数 sweep 就能解决的问题
+- 后续应继续围绕视觉 warmup 路径与服务端复用机制排查
+
+---
+
+## 13. 关键工程问题与解决过程
+
+## 13.1 Vulkan / GPU 路线编译与运行失败
+
+现象包括：
+
+- Vulkan 相关编译兼容问题
+- compute pipeline 创建失败
+- shader / driver 错误
+- 段错误退出
+
+结论：
+
+- 这不是“命令写错”级别的问题；
+- 更多是安卓 GPU 驱动、Vulkan 支持与量化 shader 的兼容性问题；
+- 因此当前项目以 CPU 路线作为正式交付版本。
+
+## 13.2 图像请求超出上下文长度
+
+图像 base64 进入请求体后，实际 prompt token 会明显增大。项目中曾出现：
+
+```text
+request exceeds the available context size (2048 tokens)
+```
+
+解决方式：
+
+- 将上下文从 `2048` 提升到 `8192`
+- benchmark 与正式服务统一使用 `-c 8192`
+
+## 13.3 模型陷入 `<think>` 而不给最终回答
 
 现象：
 
-- 请求能收到返回；
-- 但模型一直在输出 `reasoning_content`；
-- `content` 为空，最终因为 `max_tokens` 不够而截断。
+- 请求返回正常
+- 但一直输出 reasoning 内容
+- 最终 `content` 为空或被 `max_tokens` 截断
 
-#### 原因分析
-Qwen3.5 这一类模型 / 模板组合在 `llama.cpp` 当前 reasoning 机制下，可能默认进入思考模式。再叠加某些模板处理方式，就容易出现“长时间停留在 `<think>` 阶段”的情况。
-
-#### 处理方式
-启动服务时显式关闭 reasoning：
+解决方式：
 
 ```bash
-./build/bin/llama-server \
-  -m "$MODEL_FILE" \
-  --mmproj "$MMPROJ_FILE" \
-  --host 127.0.0.1 \
-  --port 8081 \
-  -c 2048 \
-  --reasoning off \
-  --reasoning-format none
+--reasoning off
+--reasoning-format none
 ```
 
-#### 工程结论
-为了保证移动端交互稳定性，当前版本默认关闭 reasoning；reasoning 模式仅作为调试用途保留。
+这是当前移动端稳定交互的必要设置。
+
+## 13.4 GGUF 文件路径 / 格式问题
+
+项目中也遇到过：
+
+```text
+failed to read magic
+```
+
+这类问题最终说明：
+
+- 路径可能指到了目录或错误文件
+- 下载产物可能不完整
+- 文件本身可能并非有效 GGUF
+
+这类排查与 benchmark 同样重要，因为部署工程并不只是“调参数”。
 
 ---
 
-### 问题 5：图片请求超过上下文长度
+## 14. 如何复现实验
 
-现象：
+### 14.1 启动服务
 
-- 文本请求正常；
-- 图片请求报 token 超限，或者明显更慢。
+```bash
+bash scripts/start_qwen_server.sh
+```
 
-#### 原因分析
-图片转 base64 后体积很大，多模态模板也会额外占用上下文。
+### 14.2 文本 warmup
 
-#### 处理方式
-- 前端或脚本侧先压缩图片；
-- 启动服务时适当增大 `-c`；
-- 尽量用短 prompt；
-- 不做长篇图片问答。
+```bash
+bash scripts/warmup.sh
+```
 
----
+### 14.3 图像 warmup
 
-## 15. 为什么最终演示主线采用 CPU，而不是 GPU
+```bash
+bash scripts/warmup_image.sh
+```
 
-这是一个我刻意做出的工程取舍。
+### 14.4 执行 sweep
 
-### 原因
-1. GPU 路线确实跑通过流程，但在安卓手机上存在明显驱动和 shader 兼容性风险；
-2. 面试现场更需要“稳”，而不是赌运气；
-3. CPU 路线虽然慢一些，但足够支撑：
-   - 纯文本聊天演示
-   - 图片分析演示
-   - 本地 HTTP 服务调用展示
+```bash
+bash scripts/sweep_threads.sh
+```
 
-### 结论
-- **GPU 路线：保留为问题分析材料**
-- **CPU 路线：作为稳定、可复现、可演示的主线方案**
+### 14.5 查看 summary
 
-这是一个很典型的部署工程判断：
+```bash
+python src/benchmarks/report_summary.py \
+  results/benchmark_runs/threads_sweep_20260401_215335/t4_tb4_ub512/text_medium_128.json
+```
 
-> 并不是所有“能跑的配置”都适合做最终交付方案。
+### 14.6 查看日志
 
----
-
-## 16. 这个项目锻炼了哪些能力
-
-### 能力 1：推理框架选型能力
-能够根据场景区分：
-
-- 服务端高吞吐：`vLLM`
-- 端侧本地部署：`llama.cpp`
-
-### 能力 2：模型格式与运行时适配能力
-- 服务端可用的量化格式不一定适合手机端运行时；
-- 手机端需要考虑 GGUF、`mmproj`、运行时兼容性；
-- 模型部署不是“下载即运行”，而是“模型格式、运行时、系统环境三者匹配”。
-
-### 能力 3：服务化思维
-不是只会命令行本地生成，而是把手机端模型进一步做成了：
-
-- 本地 HTTP 服务
-- 标准 JSON 请求
-- 文本 / 图片两类调用路径
-- 后续可接网页和 Android App
-
-### 能力 4：问题定位与工程取舍能力
-项目过程中不是一路顺滑，而是经历了：
-
-- Vulkan 编译问题
-- GPU shader 崩溃
-- 模型格式校验错误
-- reasoning 模式卡死
-- 图片上下文过长
-
-不仅能记录问题，还能给出：
-
-- 原因分析
-- 排查路径
-- 最终取舍
+```bash
+bash scripts/watch_llama_log.sh
+bash scripts/watch_web_log.sh
+```
 
 ---
 
-## 17. 项目不足与后续优化方向
+## 15. 项目价值总结
 
-### 当前不足
-1. 手机端当前主线仍以 CPU 为主，性能上不如理想 GPU 路线；
-2. 文件分析仍是“文件转文本再发给模型”的第一阶段方案；
-3. 还没有完全封装成原生 Android App；
-4. 还没有做系统化 benchmark 表格。
+这个项目的价值不只是“在手机上跑通了一个模型”，而是完整覆盖了以下能力链路：
 
-### 后续方向
-1. 继续研究安卓 GPU / Vulkan 兼容性问题；
-2. 将本地服务进一步封装为 Android App；
-3. 增加更多稳定脚本与日志；
-4. 补充端侧延迟、tokens/s、温度、功耗等指标记录；
-5. 与笔记本侧 `vLLM + FastAPI` 项目形成对比，构成“服务端部署 + 端侧部署”双项目组合。
+- 从服务端推理框架理解，过渡到端侧部署实践
+- 从模型格式选择，走到 GGUF + llama.cpp 的真实落地
+- 从单次调用验证，走到 OpenAI-compatible 服务封装
+- 从手工体验，走到 benchmark 自动化
+- 从能跑，走到可测、可比较、可解释
+- 从部署成功，走到对性能瓶颈与未解决问题的清晰表述
+
+对于大模型部署 / 推理加速方向来说，这比单纯演示“网页能聊天”更有工程含金量。
 
 ---
 
-## 18. 一句话总结项目
+## 16. 后续优化方向
 
-> 完成了从笔记本侧 `vLLM + FastAPI` 本地推理服务，到安卓手机侧 `Termux + llama.cpp + GGUF + llama-server` 本地服务化部署的完整链路，并在真实设备上完成了文本聊天与图片分析调用，同时沉淀了模型格式适配、运行时选型、兼容性排查和稳定性取舍的工程经验。
+当前版本已经完成“部署 + 服务化 + 基准测试 + 参数调优”的第一阶段闭环。后续仍有三条明确优化线：
+
+### 16.1 图像首个正式请求长尾优化
+
+优先级最高。重点应放在：
+
+- warmup 内容是否与正式 case 完全一致
+- warmup 后服务是否真正复用了同一路径
+- 是否需要连续多次 image warmup
+- 是否存在视觉 cache 未稳定保留的问题
+
+### 16.2 文本参数进一步细分
+
+后续可以继续扩展：
+
+- 不同 `PARALLEL` 配置
+- 不同 `BATCH_SIZE`
+- 文本并发下的 aggregate 吞吐对比
+- 更长输出长度下的 decode 稳定性
+
+### 16.3 结果可视化与报告化
+
+当前结果已经结构化保存为 JSON，后续可以进一步：
+
+- 自动生成 Markdown 报告
+- 绘制 TTFT / E2E / TPS 曲线
+- 输出不同参数组合的总表
 
 ---
 
+## 17. 总结
 
-## 19. 说明
+这是一个以 **Android 手机本地部署多模态模型** 为起点，进一步扩展到 **OpenAI-compatible 服务化、自动化基准测试、参数 sweep、性能分析与问题定位** 的完整工程项目。
 
-本 README 不是“成功学复盘”，而是完整记录：
+当前版本的结论清晰：
 
-- 如何一步步把链路跑通的；
-- 在哪些地方碰壁；
-- 如何判断哪些问题该继续深挖，哪些问题该先绕开；
-- 为什么最终选择了一个更稳、更适合展示和交付的方案。
-
-如果你也在做手机端模型部署，希望这份记录能帮你少走一些弯路。
+- **文本链路已经基本跑顺，并形成了可复用的参数调优结论；**
+- **图像链路已经具备热态可用性，但首个正式请求长尾仍是下一阶段的核心优化目标。**
 
