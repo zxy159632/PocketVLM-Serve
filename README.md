@@ -1,4 +1,5 @@
-# Android 手机端多模态模型部署与性能测试实战：Qwen3.5-0.8B + llama.cpp + Termux
+# PocketVLM-Serve
+PocketVLM-Serve: On-Device Multimodal Model Deployment and Benchmarking on Android
 
 > 一个面向**大模型部署 / 推理加速方向**的真实工程项目记录。  
 > 目标不是“把模型跑起来就算完成”，而是把**模型选型、端侧部署、服务化封装、基准测试、参数调优、问题定位**完整走通，并沉淀成可复现的项目资料。
