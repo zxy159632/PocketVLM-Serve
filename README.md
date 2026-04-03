@@ -1,5 +1,5 @@
 # PocketVLM-Serve
-[简体中文](./README.md) | [English](./README_en.md)
+[简体中文](./README.md) | [English](./README_EN.md)
 PocketVLM-Serve: On-Device Multimodal Model Deployment and Benchmarking on Android
 
 > 一个面向**大模型部署 / 推理加速方向**的真实工程项目记录。  

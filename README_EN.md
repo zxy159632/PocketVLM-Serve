@@ -1,6 +1,6 @@
 # Android On-Device Multimodal Model Deployment and Performance Benchmarking: Qwen3.5-0.8B + llama.cpp + Termux
 
-[English](./README_en.md) | [简体中文](./README.md)
+[English](./README_EN.md) | [简体中文](./README.md)
 
 > A real-world engineering project aimed at **LLM deployment / inference acceleration**.
 > The goal is not merely to “get the model running,” but to complete the full loop of **model selection, on-device deployment, service packaging, benchmarking, parameter tuning, and issue diagnosis**, and then document it as a reproducible project record.
