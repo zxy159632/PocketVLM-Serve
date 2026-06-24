@@ -728,14 +728,6 @@ bash scripts/watch_web_log.sh
 - 文本并发下的 aggregate 吞吐对比
 - 更长输出长度下的 decode 稳定性
 
-### 16.3 结果可视化与报告化
-
-当前结果已经结构化保存为 JSON，后续可以进一步：
-
-- 自动生成 Markdown 报告
-- 绘制 TTFT / E2E / TPS 曲线
-- 输出不同参数组合的总表
-
 ---
 
 ## 17. 总结
